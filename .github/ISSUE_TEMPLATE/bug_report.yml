@@ -1,0 +1,166 @@
+name: Баг-репорт
+description: Сообщить об ошибке через удобную форму-опросник
+title: "[BUG] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо за репорт.
+
+        Чем точнее заполнена форма, тем быстрее получится воспроизвести и починить проблему.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Что сломалось?
+      description: Опишите проблему простыми словами в 1-3 предложениях.
+      placeholder: |
+        Например:
+        После нажатия на /settings бот ничего не отвечает в личке, хотя раньше меню открывалось.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Где именно проявляется проблема?
+      description: Выберите наиболее подходящий сценарий.
+      options:
+        - Команды бота
+        - Кнопки / callback-и
+        - Настройки чатов
+        - Логи модерации
+        - Join / invite события
+        - Бан / уведомления
+        - Telethon / userbot
+        - Lookup / проверка Telega
+        - Docker / запуск
+        - Другое
+    validations:
+      required: true
+
+  - type: dropdown
+    id: chat_type
+    attributes:
+      label: В каком типе чата это произошло?
+      options:
+        - private
+        - group
+        - supergroup
+        - channel
+        - Не знаю / не применимо
+    validations:
+      required: true
+
+  - type: input
+    id: command
+    attributes:
+      label: Какая команда или действие привели к ошибке?
+      description: Если это не команда, напишите что именно сделал пользователь.
+      placeholder: "/start, /settings, нажатие на кнопку, join пользователя, invite в канал"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Как воспроизвести?
+      description: Напишите шаги по порядку.
+      placeholder: |
+        1. Открыть личный чат с ботом
+        2. Отправить /settings
+        3. Нажать на нужный чат
+        4. Получить ошибку / пустой ответ
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Что вы ожидали увидеть?
+      placeholder: Бот должен был открыть панель настроек и показать переключатели правил.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Что произошло на самом деле?
+      placeholder: Бот ничего не ответил / ответил ошибкой / забанил не того пользователя / показал неверный статус.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи или текст ошибки
+      description: Если есть traceback, предупреждение, console log или ответ Telegram API — вставьте сюда.
+      placeholder: |
+        Вставьте сюда лог, traceback или текст ошибки.
+      render: text
+
+  - type: input
+    id: chat_id
+    attributes:
+      label: chat_id
+      description: Если известен.
+      placeholder: "-1001234567890"
+
+  - type: input
+    id: user_id
+    attributes:
+      label: user_id
+      description: Если проблема связана с конкретным пользователем.
+      placeholder: "123456789"
+
+  - type: dropdown
+    id: launch_mode
+    attributes:
+      label: Как вы запускаете проект?
+      options:
+        - local
+        - docker compose
+        - Не знаю
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Версия / commit
+      description: Хеш коммита, тег или просто напишите, что используете локальный последний код.
+      placeholder: "main @ abc1234"
+
+  - type: input
+    id: environment
+    attributes:
+      label: Окружение
+      description: ОС, Python и при желании способ установки.
+      placeholder: "Windows 11, Python 3.13, local venv"
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Дополнительный контекст
+      description: Всё, что может помочь быстрее понять проблему.
+      placeholder: |
+        Например:
+        - ошибка плавающая или стабильная
+        - началось после изменения конфига
+        - воспроизводится только в одном канале
+        - связано с invite, а не с обычным join
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Перед отправкой проверьте
+      options:
+        - label: Я описал(а) шаги воспроизведения
+          required: true
+        - label: Я приложил(а) лог или текст ошибки, если он был
+          required: false
+        - label: Я удалил(а) токены, пароли и другие секреты из репорта
+          required: true
+        - label: Я проверил(а), что это именно баг, а не вопрос по настройке
+          required: true
