@@ -1,0 +1,19 @@
+.env
+.venv/
+data/
+sessions/
+__pycache__/
+*.pyc
+*.session
+.tmp_test_db/
+.pytest_cache/
+pytest-cache-files-*/
+.coverage*
+*.egg-info/
+build/
+dist/
+/docs
+/tests
+pycacheCleaner.bat
+docs/Telega Detector.py
+/tests

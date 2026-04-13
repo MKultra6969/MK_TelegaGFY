@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: telega-guard:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /app/state/data/telega_guard.sqlite3
+      TELETHON_SESSION: /app/state/sessions/telega_guard
+    volumes:
+      - ./data:/app/state/data
+      - ./sessions:/app/state/sessions
+    command: ["python", "-m", "telega_guard"]
+
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: telega-guard:latest
+    profiles: ["auth"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /app/state/data/telega_guard.sqlite3
+      TELETHON_SESSION: /app/state/sessions/telega_guard
+    volumes:
+      - ./data:/app/state/data
+      - ./sessions:/app/state/sessions
+    stdin_open: true
+    tty: true
+    command: ["python", "-m", "telega_guard.telethon_auth"]
