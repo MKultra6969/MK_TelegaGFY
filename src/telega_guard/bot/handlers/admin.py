@@ -39,8 +39,6 @@ def create_admin_router(
 
         user_id = message.from_user.id
         chats = await owned_chats(repository, bot, user_id)
-        if not chats and owner_user_id != user_id:
-            return
 
         if not chats:
             await message.answer(render_empty_chat_list_text(), disable_web_page_preview=True)
@@ -84,9 +82,6 @@ def create_admin_router(
         if callback_data.action == "list":
             user_id = query.from_user.id
             chats = await owned_chats(repository, bot, user_id)
-            if not chats and owner_user_id != user_id:
-                await query.answer()
-                return
 
             if query.message is not None:
                 if chats:

@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from aiogram import Bot, Router
-from aiogram.filters import Command
-from aiogram.filters import CommandStart
-from aiogram import html
+from aiogram import Bot, Router, html
+from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
-from telega_guard.bot.access import has_private_access
 from telega_guard.bot.keyboards import start_keyboard
 from telega_guard.repositories.chat_settings import ChatSettingsRepository
 
@@ -22,13 +19,6 @@ def create_start_router(
         if getattr(getattr(message, "chat", None), "type", None) != "private":
             return
         if message.from_user is None:
-            return
-        if not await has_private_access(
-            repository,
-            bot,
-            message.from_user.id,
-            owner_user_id=owner_user_id,
-        ):
             return
 
         me = await bot.get_me()
