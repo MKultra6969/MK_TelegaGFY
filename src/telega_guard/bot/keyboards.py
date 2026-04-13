@@ -4,7 +4,7 @@ from aiogram.types import InlineKeyboardButton
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from telega_guard.bot.callbacks import LogsCallback, SettingsCallback
+from telega_guard.bot.callbacks import BroadcastCallback, LogsCallback, SettingsCallback
 from telega_guard.models import ChatSettings
 
 
@@ -108,6 +108,20 @@ def start_keyboard(bot_username: str) -> InlineKeyboardMarkup:
             ],
         ]
     )
+
+
+def broadcast_confirmation_keyboard(token: str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="Да",
+        callback_data=BroadcastCallback(action="send", token=token),
+    )
+    builder.button(
+        text="Нет",
+        callback_data=BroadcastCallback(action="cancel", token=token),
+    )
+    builder.adjust(2)
+    return builder.as_markup()
 
 
 def _mark(value: bool) -> str:

@@ -8,6 +8,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.types import BotCommand
+from aiogram.types import BotCommandScopeChat
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 
@@ -15,12 +16,13 @@ from telega_guard.bot.handlers.admin import create_admin_router
 from telega_guard.bot.handlers.membership import create_membership_router
 from telega_guard.bot.handlers.owner import create_owner_router
 from telega_guard.bot.handlers.start import create_start_router
-from telega_guard.bot.middlewares import InteractionLoggingMiddleware
+from telega_guard.bot.middlewares import InteractionLoggingMiddleware, PrivateUserTrackingMiddleware
 from telega_guard.config import Settings
 from telega_guard.db import Database
 from telega_guard.repositories.chat_settings import ChatSettingsRepository
 from telega_guard.repositories.lookup_cache import LookupCacheRepository
 from telega_guard.repositories.moderation_events import ModerationEventRepository
+from telega_guard.repositories.private_users import PrivateUsersRepository
 from telega_guard.repositories.runtime_state import RuntimeStateRepository
 from telega_guard.services.channel_admin_log import ChannelAdminLogPoller
 from telega_guard.services.detector import TelethonDetectorService
@@ -55,6 +57,7 @@ class TelegaGuardApplication:
         self.lookup_repository = LookupCacheRepository(self.db)
         self.runtime_repository = RuntimeStateRepository(self.db)
         self.event_repository = ModerationEventRepository(self.db)
+        self.private_users_repository = PrivateUsersRepository(self.db)
 
         self.lookup_service = CallsLookupService(
             self.lookup_repository,
@@ -121,15 +124,25 @@ class TelegaGuardApplication:
         self.dispatcher.callback_query.outer_middleware(self._interaction_logger)
         self.dispatcher.chat_member.outer_middleware(self._interaction_logger)
         self.dispatcher.my_chat_member.outer_middleware(self._interaction_logger)
+        self.dispatcher.message.outer_middleware(
+            PrivateUserTrackingMiddleware(self.private_users_repository)
+        )
+        self.dispatcher.callback_query.outer_middleware(
+            PrivateUserTrackingMiddleware(self.private_users_repository)
+        )
 
+        self.dispatcher.include_router(
+            create_owner_router(
+                self.detector,
+                self.private_users_repository,
+                self.settings.owner_user_id,
+            )
+        )
         self.dispatcher.include_router(
             create_start_router(
                 self.chat_settings_repository,
                 owner_user_id=self.settings.owner_user_id,
             )
-        )
-        self.dispatcher.include_router(
-            create_owner_router(self.detector, self.settings.owner_user_id)
         )
         self.dispatcher.include_router(
             create_admin_router(
@@ -169,11 +182,19 @@ class TelegaGuardApplication:
         )
 
     async def _setup_bot_commands(self) -> None:
-        await self.bot.set_my_commands(
-            [
-                BotCommand(command="start", description="Открыть стартовое сообщение"),
-                BotCommand(command="settings", description="Настройки ваших чатов"),
-                BotCommand(command="logs", description="Посмотреть логи модерации"),
-                BotCommand(command="info", description="Информация о боте"),
-            ]
-        )
+        default_commands = [
+            BotCommand(command="start", description="Открыть стартовое сообщение"),
+            BotCommand(command="settings", description="Настройки ваших чатов"),
+            BotCommand(command="logs", description="Посмотреть логи модерации"),
+            BotCommand(command="info", description="Информация о боте"),
+        ]
+        await self.bot.set_my_commands(default_commands)
+        if self.settings.owner_user_id is not None:
+            await self.bot.set_my_commands(
+                [
+                    *default_commands,
+                    BotCommand(command="check_user", description="Ручная проверка пользователя"),
+                    BotCommand(command="broadcast", description="Рассылка пользователям"),
+                ],
+                scope=BotCommandScopeChat(chat_id=self.settings.owner_user_id),
+            )

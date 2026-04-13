@@ -10,3 +10,8 @@ class SettingsCallback(CallbackData, prefix="cfg"):
 class LogsCallback(CallbackData, prefix="logs"):
     action: str
     chat_id: int = 0
+
+
+class BroadcastCallback(CallbackData, prefix="broadcast"):
+    action: str
+    token: str

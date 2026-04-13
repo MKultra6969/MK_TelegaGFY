@@ -7,6 +7,8 @@ from typing import Any
 from aiogram import BaseMiddleware
 from aiogram.types import CallbackQuery, ChatMemberUpdated, Message, TelegramObject
 
+from telega_guard.repositories.private_users import PrivateUsersRepository
+
 LOGGER = logging.getLogger(__name__)
 _TEXT_PREVIEW_LIMIT = 120
 
@@ -21,6 +23,22 @@ class InteractionLoggingMiddleware(BaseMiddleware):
         payload = describe_interaction(event)
         if payload is not None:
             LOGGER.info(payload)
+        return await handler(event, data)
+
+
+class PrivateUserTrackingMiddleware(BaseMiddleware):
+    def __init__(self, repository: PrivateUsersRepository) -> None:
+        self.repository = repository
+
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        user_id = _extract_private_user_id(event)
+        if user_id is not None:
+            await self.repository.touch_user(user_id)
         return await handler(event, data)
 
 
@@ -117,3 +135,14 @@ def _looks_like_chat_member_update(event: Any) -> bool:
         and hasattr(event, "old_chat_member")
         and hasattr(event, "new_chat_member")
     )
+
+
+def _extract_private_user_id(event: TelegramObject) -> int | None:
+    if isinstance(event, Message) or _looks_like_message(event):
+        if getattr(getattr(event, "chat", None), "type", None) == "private":
+            return getattr(getattr(event, "from_user", None), "id", None)
+        return None
+    if isinstance(event, CallbackQuery) or _looks_like_callback(event):
+        if getattr(getattr(getattr(event, "message", None), "chat", None), "type", None) == "private":
+            return getattr(getattr(event, "from_user", None), "id", None)
+    return None
